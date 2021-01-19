@@ -291,7 +291,7 @@ class PageParser {
 			$oldId = $node->getAttribute( 'id' );
 			$id = $oldId;
 			// Check for duplicates and fix them by appending a count.
-			if ( array_search( $id, self::$ids ) !== false ) {
+			if ( array_search( $id, self::$ids, true ) !== false ) {
 				$id .= '-n' . ( array_count_values( self::$ids )[ $id ] + 1 );
 			}
 			// Must start with a letter.

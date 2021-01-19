@@ -286,4 +286,11 @@ class Api {
 			'handler' => $handler
 		] );
 	}
+
+	/**
+	 * Turn off logging.
+	 */
+	public function disableLogging(): void {
+		$this->client->getConfig( 'handler' )->remove( 'logging' );
+	}
 }
