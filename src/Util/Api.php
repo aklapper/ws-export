@@ -49,6 +49,9 @@ class Api {
 	/** @var string[][] */
 	private $namespaces = [];
 
+	/** @var mixed[] */
+	private $wikiConfig;
+
 	public function __construct( LoggerInterface $logger, CacheItemPoolInterface $cacheItemPool, CacheInterface $cache, ClientInterface $client = null ) {
 		$this->logger = $logger;
 		$this->cache = $cache;
@@ -93,6 +96,30 @@ class Api {
 
 	public function getLang(): string {
 		return $this->lang;
+	}
+
+	/**
+	 * Get the on-wiki configuration from the `MediaWiki:WS_Export.json` page. Cached for 1 month.
+	 * @return mixed[] With keys: defaultFont
+	 */
+	public function getWikiConfig(): array {
+		if ( isset( $this->wikiConfig[ $this->getLang() ] ) ) {
+			return $this->wikiConfig[ $this->getLang() ];
+		}
+		$this->wikiConfig[ $this->getLang() ] = $this->cache->get( 'wikiConfig_' . $this->getLang(), function ( CacheItemInterface $cacheItem ) {
+			$cacheItem->expiresAfter( new DateInterval( 'P1M' ) );
+			$configPageName = 'MediaWiki:WS_Export.json';
+			$json = $this->get( 'https://' . $this->getDomainName() . '/w/index.php?title=' . $configPageName . '&action=raw&ctype=application/json' );
+			$data = json_decode( $json, true );
+			if ( $data === null ) {
+				return [];
+			}
+			return $data;
+		} );
+		$defaults = [
+			'defaultFont' => '',
+		];
+		return array_merge( $defaults, $this->wikiConfig[ $this->getLang() ] );
 	}
 
 	/**

@@ -96,7 +96,7 @@ class ExportController extends AbstractController {
 			return $this->export( $request, $api, $fontProvider, $generatorSelector );
 		}
 
-		$font = $this->getFont( $request, $api->getLang(), $fontProvider );
+		$font = $this->getFont( $request, $api, $fontProvider );
 		$images = (bool)$request->get( 'images', true );
 		return $this->render( 'export.html.twig', [
 			'fonts' => $fontProvider->getAll(),
@@ -120,7 +120,7 @@ class ExportController extends AbstractController {
 		// Get params.
 		$page = $request->get( 'page' );
 		$format = $this->getFormat( $request );
-		$font = $this->getFont( $request, $api->getLang(), $fontProvider );
+		$font = $this->getFont( $request, $api, $fontProvider );
 		// The `images` checkbox submits as 'false' to disable, so needs extra filtering.
 		$images = filter_var( $request->get( 'images', true ), FILTER_VALIDATE_BOOL );
 
@@ -159,11 +159,10 @@ class ExportController extends AbstractController {
 	 * @param string $lang A language code.
 	 * @return string
 	 */
-	private function getFont( Request $request, $lang, FontProvider $fontProvider ): ?string {
-		// Default font for non-latin languages.
+	private function getFont( Request $request, Api $api, FontProvider $fontProvider ): ?string {
 		$font = $fontProvider->resolveName( $request->get( 'fonts' ) );
-		if ( !$font && !in_array( $lang, [ 'fr', 'en', 'de', 'it', 'es', 'pt', 'vec', 'pl', 'nl', 'fa', 'he', 'ar', 'zh', 'jp', 'kr' ] ) ) {
-			$font = 'FreeSerif';
+		if ( !$font ) {
+			$font = $api->getWikiConfig()['defaultFont'] ?? '';
 		}
 		if ( !$fontProvider->getOne( $font ) ) {
 			$font = '';
